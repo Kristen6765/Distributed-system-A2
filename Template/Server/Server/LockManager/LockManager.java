@@ -232,9 +232,11 @@ public class LockManager
 					// Seeing the comments at the top of this function might be helpful
 
 					//TODO: Lock conversion
+					//(2) transaction already had a WRITE lock
 					if (l_dataLockObject.getLockType() == TransactionLockObject.LockType.LOCK_WRITE) {
 						throw new RedundantLockRequestException(dataLockObject.getXId(), "redundant WRITE lock request");
 					}
+					//(1) transaction already had a READ lock
 					if (l_dataLockObject.getLockType() == TransactionLockObject.LockType.LOCK_READ){
 						bitset.set(0);
 					}
