@@ -42,150 +42,201 @@ public class Middleware extends ResourceManager {
         this.setTransactionManager(traxManager);
     }
 
-    public double[] start() throws RemoteException{
-        double time = getCurrentTime();
+    public long[] start() throws RemoteException{
+        long time = getCurrentTime();
         int xid  = traxManager.start();
         Trace.info("Start transaction .... " + xid);
-        return new double[] {xid, getCurrentTime() - time};
+        return new long[] {xid, getCurrentTime() - time};
     }
 
-    public double[] commit(int xid) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+
+    public long[] commit(int xid) throws RemoteException,TransactionAbortedException, InvalidTransactionException
     {
-       
-    
-        double time0=getCurrentTime();
-        double timeCar0=0;
-        double timeCar1=0;
-        double timeFlight0=0;
-        double timeFlight1=0;
-        double timeRoom0=0;
-        double timeRoom1=0;
-
+        if(!traxManager.isActive(xid))
+            throw new InvalidTransactionException(xid, "Middleware commit: transaction is not active");
         Transaction t = traxManager.getActiveTransaction(xid);
-
-        if(t == null){
-            return false;
-        }
+        RMHashMap m = t.get_TMPdata();
         boolean[] relatedRM = t.getRelatedRMs();
 
-        double arrFlight[]=new double[2];
-        double arrRoom[]=new double[2];
-        double arrCar[]=new double[2];
-
         if (relatedRM[0]){
-                timeFlight0=getCurrentTime();
-                double tf1=getCurrentTime();
-                if(!traxManager.isActive(xid))
-                throw new InvalidTransactionException(xid, "RM: Not a valid transaction");
-
-                Transaction transaction = traxManager.getActiveTransaction(xid);
-                RMHashMap m = transaction.get_TMPdata();
-
-                double tf2=getCurrentTime();
-                synchronized (flightRM.m_data ){
-                    Set<String> keyset = m.keySet();
-                    for (String key : keyset) {
-                        System.out.println("Write:(" + key + "," + m.get(key) + ")");
-                        flightRM.m_data.put(key, m.get(key));
-                    }
+            synchronized (flightRM.m_data ){
+                Set<String> keyset = m.keySet();
+                for (String key : keyset) {
+                    System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    flightRM.m_data.put(key, m.get(key));
                 }
-                 double tf3=getCurrentTime();
-                traxManager.removeActiveTransaction(xid);
-                timeFlight1=timeFlight0-getCurrentTime();
-
-
-                arrFlight[0]=getCurrentTime()-tf1;
-                arrFlight[1]=tf3-tf2;
-                
-        
+            }
         }
         if (relatedRM[1]){
-                timeRoom0=getCurrentTime();
-                double tr1=getCurrentTime();
-                if(!traxManager.isActive(xid))
-                throw new InvalidTransactionException(xid, "RM: Not a valid transaction");
-
-                Transaction transaction = traxManager.getActiveTransaction(xid);
-                RMHashMap m = transaction.get_TMPdata();
-
-
-                double tr2=getCurrentTime();
-                synchronized (roomRM.m_data) {
-                    Set<String> keyset = m.keySet();
-                    for (String key : keyset) {
-                        System.out.println("Write:(" + key + "," + m.get(key) + ")");
-                        roomRM.m_data.put(key, m.get(key));
-                    }
+            synchronized (flightRM.m_data) {
+                Set<String> keyset = m.keySet();
+                for (String key : keyset) {
+                    System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    flightRM.m_data.put(key, m.get(key));
                 }
-                double tr3=getCurrentTime();
-                traxManager.removeActiveTransaction(xid);
-                timeRoom1=timeRoom0-getCurrentTime();
-
-                arrRoom[0]=getCurrentTime()-tr1;
-                arrRoom[1]=tr3-tr2;
-                
+            }
         }
         if (relatedRM[2]){
-
-
-                timeCar0=getCurrentTime();
-                double tc1=getCurrentTime();
-                if(!traxManager.isActive(xid))
-                throw new InvalidTransactionException(xid, "RM: Not a valid transaction");
-
-                Transaction transaction = traxManager.getActiveTransaction(xid);
-                RMHashMap m = transaction.get_TMPdata();
-
-                double tc2=getCurrentTime();
-                synchronized (carRM.m_data) {
-                    Set<String> keyset = m.keySet();
-                    for (String key : keyset) {
-                        System.out.println("Write:(" + key + "," + m.get(key) + ")");
-                        carRM.m_data.put(key, m.get(key));
-                    }
+            synchronized (flightRM.m_data) {
+                Set<String> keyset = m.keySet();
+                for (String key : keyset) {
+                    System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    flightRM.m_data.put(key, m.get(key));
                 }
-                double tc3=getCurrentTime();
-                traxManager.removeActiveTransaction(xid);
-                timeCar1=timeCar0-getCurrentTime();
-
-                arrCar[0]=getCurrentTime()-tc1;
-                arrCar[1]=tc3-tc2;
-                
+            }
         }
-
-
-
-        double [] timesr=new double[]{0,0};
-
-        timesr=helperCaltime(arrRoom, arrFlight, arrCar,timesr);
-
 
         //if it is customer, we need all resources managers to work
         if (relatedRM[0] && relatedRM[1] && relatedRM[2]) {
-            // RMHashMap m = t.getData();
-            // synchronized (m_data) {
-            //     Set<String> keyset = m.keySet();
-            //     for (String key : keyset) {
-            //         System.out.print("Write:(" + key + "," + m.get(key) + ")");
-            //         m_data.put(key, m.get(key));
-            //     }
-            // }
+            synchronized (m_data) {
+                Set<String> keyset = m.keySet();
+                for (String key : keyset) {
+                    System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    m_data.put(key, m.get(key));
+                }
+            }
         }
-        endTransaction(xid, true);
 
-
-       double endTime=getCurrentTime()- time0;
-
-        if (timeCar1 > 0) endTime -= timeCar1;
-        if (timeRoom1 > 0) endTime -= timeRoom1;
-        if (timeFlight1 > 0) endTime -= timeFlight1;
-
-
-        return new double [] {endTime, timesr[0], timesr[1]};
-       // return true; 默认为true????
+        traxManager.removeActiveTransaction(xid);
+        lockManager.UnlockAll(xid);
+        return new long[] {-1000, -1000, -1000};
     }
 
-    public double[] helperCaltime(double [] arrRoom, double [] arrFlight, double [] arrCar,  double [] timesr){
+
+//    public long[] commit(int xid) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+//    {
+//
+//
+//        long time0=getCurrentTime();
+//        long timeCar0=0;
+//        long timeCar1=0;
+//        long timeFlight0=0;
+//        long timeFlight1=0;
+//        long timeRoom0=0;
+//        long timeRoom1=0;
+//
+//        Transaction t = traxManager.getActiveTransaction(xid);
+//
+//        if(t == null){
+//           // return false;
+//           return new long [] {-1.0};
+//        }
+//        boolean[] relatedRM = t.getRelatedRMs();
+//
+//        long arrFlight[]=new long[2];
+//        long arrRoom[]=new long[2];
+//        long arrCar[]=new long[2];
+//
+//        if (relatedRM[0]){
+//                timeFlight0=getCurrentTime();
+//                long tf1=getCurrentTime();
+//                if(!traxManager.isActive(xid))
+//                throw new InvalidTransactionException(xid, "RM: Not a valid transaction");
+//
+//                Transaction transaction = traxManager.getActiveTransaction(xid);
+//                RMHashMap m = transaction.get_TMPdata();
+//
+//                long tf2=getCurrentTime();
+//                synchronized (flightRM.m_data ){
+//                    Set<String> keyset = m.keySet();
+//                    for (String key : keyset) {
+//                        System.out.println("Write:(" + key + "," + m.get(key) + ")");
+//                        flightRM.m_data.put(key, m.get(key));
+//                    }
+//                }
+//                 long tf3=getCurrentTime();
+//                traxManager.removeActiveTransaction(xid);
+//                timeFlight1=timeFlight0-getCurrentTime();
+//
+//
+//                arrFlight[0]=getCurrentTime()-tf1;
+//                arrFlight[1]=tf3-tf2;
+//
+//
+//        }
+//        if (relatedRM[1]){
+//                timeRoom0=getCurrentTime();
+//                long tr1=getCurrentTime();
+//                if(!traxManager.isActive(xid))
+//                throw new InvalidTransactionException(xid, "RM: Not a valid transaction");
+//
+//                Transaction transaction = traxManager.getActiveTransaction(xid);
+//                RMHashMap m = transaction.get_TMPdata();
+//
+//
+//                long tr2=getCurrentTime();
+//                synchronized (roomRM.m_data) {
+//                    Set<String> keyset = m.keySet();
+//                    for (String key : keyset) {
+//                        System.out.println("Write:(" + key + "," + m.get(key) + ")");
+//                        roomRM.m_data.put(key, m.get(key));
+//                    }
+//                }
+//                long tr3=getCurrentTime();
+//                traxManager.removeActiveTransaction(xid);
+//                timeRoom1=timeRoom0-getCurrentTime();
+//
+//                arrRoom[0]=getCurrentTime()-tr1;
+//                arrRoom[1]=tr3-tr2;
+//
+//        }
+//        if (relatedRM[2]){
+//                timeCar0=getCurrentTime();
+//                long tc1=getCurrentTime();
+//                if(!traxManager.isActive(xid))
+//                throw new InvalidTransactionException(xid, "RM: Not a valid transaction");
+//
+//                Transaction transaction = traxManager.getActiveTransaction(xid);
+//                RMHashMap m = transaction.get_TMPdata();
+//
+//                long tc2=getCurrentTime();
+//                synchronized (carRM.m_data) {
+//                    Set<String> keyset = m.keySet();
+//                    for (String key : keyset) {
+//                        System.out.println("Write:(" + key + "," + m.get(key) + ")");
+//                        carRM.m_data.put(key, m.get(key));
+//                    }
+//                }
+//                long tc3=getCurrentTime();
+//                traxManager.removeActiveTransaction(xid);
+//                timeCar1=timeCar0-getCurrentTime();
+//
+//                arrCar[0]=getCurrentTime()-tc1;
+//                arrCar[1]=tc3-tc2;
+//
+//        }
+//
+//        long [] timesr=new long[]{0,0};
+//
+//        timesr=helperCaltime(arrRoom, arrFlight, arrCar,timesr);
+//
+//
+//        //if it is customer, we need all resources managers to work
+//        if (relatedRM[0] && relatedRM[1] && relatedRM[2]) {
+//            // RMHashMap m = t.getData();
+//            // synchronized (m_data) {
+//            //     Set<String> keyset = m.keySet();
+//            //     for (String key : keyset) {
+//            //         System.out.print("Write:(" + key + "," + m.get(key) + ")");
+//            //         m_data.put(key, m.get(key));
+//            //     }
+//            // }
+//        }
+//        endTransaction(xid, true);
+//
+//
+//       long endTime=getCurrentTime()- time0;
+//
+//        if (timeCar1 > 0) endTime -= timeCar1;
+//        if (timeRoom1 > 0) endTime -= timeRoom1;
+//        if (timeFlight1 > 0) endTime -= timeFlight1;
+//
+//
+//        return new long [] {endTime, timesr[0], timesr[1]};
+//       // return true; 默认为true????
+//    }
+
+    public long[] helperCaltime(long [] arrRoom, long [] arrFlight, long [] arrCar,  long [] timesr){
 
         if(arrRoom!=null){
             timesr[0]=timesr[0]+arrRoom[0];
@@ -273,44 +324,49 @@ public class Middleware extends ResourceManager {
         return true;
     }
 
-    public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException,TransactionAbortedException, InvalidTransactionException {
+    public  long[] addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException,TransactionAbortedException, InvalidTransactionException {
+        long time0=getCurrentTime();
         int id = xid;
         Transaction trx = traxManager.getActiveTransaction(xid);
-        trx.resetTimer();
+        //trx.resetTimer();
 
         Trace.info("addFlight - Redirect to Flight Resource Manager");
         //checkTransaction(id);
         acquireLock(id, Flight.getKey(flightNum), TransactionLockObject.LockType.LOCK_WRITE);
         addResourceManagerUsed(id,"Flight");
 
-        return flightRM.addFlight(id, flightNum, flightSeats, flightPrice);
+        long time1=getCurrentTime();
+        long r[]= flightRM.addFlight(id, flightNum, flightSeats, flightPrice);
+        long time2=getCurrentTime()-time1;
+        return new long[] {time1- time0,r[0], r[1] };
+       // return flightRM.addFlight(id, flightNum, flightSeats, flightPrice);
     }
 
-    public double[] addCars(int xid, String location, int numCars, int price) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+    public long[] addCars(int xid, String location, int numCars, int price) throws RemoteException,TransactionAbortedException, InvalidTransactionException
     {
 
-        double time0=getCurrentTime();
+        long time0=getCurrentTime();
         int id = xid;
         Trace.info("addCars - Redirect to Car Resource Manager");
         //checkTransaction(id);
         acquireLock(id, Car.getKey(location), TransactionLockObject.LockType.LOCK_WRITE);
         addResourceManagerUsed(id,"Car");
 
-        double time1=getCurrentTime();
-        double r[]= carRM.addCars(id, location, numCars, price);
+        long time1=getCurrentTime();
+        long r[]= carRM.addCars(id, location, numCars, price);
 
-        double time2=getCurrentTime()-time1;
-        return new double[] {getCurrentTime()-time0-time2,r[0] };
+        long time2=getCurrentTime()-time1;
+        return new long[] {time1- time0,r[0], r[1] };
         //should return a true
 
        // return carRM.addCars(id, location, numCars, price);
 
     }
 
-    public double[] addRooms(int xid, String location, int numRooms, int price) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+    public long[] addRooms(int xid, String location, int numRooms, int price) throws RemoteException,TransactionAbortedException, InvalidTransactionException
     {
 
-        double time0=getCurrentTime();
+        long time0=getCurrentTime();
         int id = xid;
         Trace.info("addRooms - Redirect to Room Resource Manager");
         //checkTransaction(id);
@@ -318,19 +374,20 @@ public class Middleware extends ResourceManager {
         acquireLock(id, Room.getKey(location), TransactionLockObject.LockType.LOCK_WRITE);
         addResourceManagerUsed(id,"Room");
 
-        double time1=getCurrentTime();
-        double r[]= roomRM.addRooms(id, location, numRooms, price);
-        double time2=getCurrentTime()-time1;
-        return new double[] {getCurrentTime()-time0-time2,r[0] };
+        long time1=getCurrentTime();
+        long r[]= roomRM.addRooms(id, location, numRooms, price);
+        long time2=getCurrentTime()-time1;
+        return new long[] {time1- time0,r[0], r[1] };
 
         //return roomRM.addRooms(id, location, numRooms, price);
 
     }
 
-    public double[] deleteFlight(int xid, int flightNum) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+    public boolean deleteFlight(int xid, int flightNum)
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException
     {
 
-        double time0=getCurrentTime();
+       
         int id = xid;
         Trace.info("deleteFlight - Redirect to Flight Resource Manager");
         //checkTransaction(id);
@@ -339,11 +396,9 @@ public class Middleware extends ResourceManager {
         addResourceManagerUsed(id,"Flight");
 
 
-        double time1=getCurrentTime();
-        double r[]= flightRM.deleteFlight(id, flightNum);
-        double time2=getCurrentTime()-time1;
-        return new double[] {getCurrentTime()-time0-time2,r[0] };
-       // return flightRM.deleteFlight(id, flightNum);
+       
+      //  return new long[] {getCurrentTime()-time0-time2,r[0] };
+        return flightRM.deleteFlight(id, flightNum);
 
     }
 
@@ -372,51 +427,58 @@ public class Middleware extends ResourceManager {
     }
 
 
-    public double[] queryFlight(int xid, int flightNumber) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+    public long[] queryFlight(int xid, int flightNumber) throws RemoteException,TransactionAbortedException, InvalidTransactionException
     {
 
-        double time1= getCurrentTime();
+        long time1= getCurrentTime();
+        System.out.println("time1 " + time1);
         int id = xid;
         Trace.info("queryFlight - Redirect to Flight Resource Manager");
 
     
 
         Transaction trx = traxManager.getActiveTransaction(xid);
-        trx.resetTimer();
+        //trx.resetTimer();
 
 
         acquireLock(id, Flight.getKey(flightNumber), TransactionLockObject.LockType.LOCK_READ);
         addResourceManagerUsed(id,"Flight");
 
-        double time2= getCurrentTime();
-        double arr[]= flightRM.queryFlight(id, flightNumber);
-        double time3=getCurrentTime()-time2;
-        return new double[] {getCurrentTime() - time1 - time3, arr[0], arr[1]};
+        long time2= getCurrentTime();
+        System.out.println("time2 " + time2);
+        long arr[]= flightRM.queryFlight(id, flightNumber);
+        long time3=getCurrentTime()-time2;
+        return new long[] {time2- time1, arr[0], arr[1], arr[2]};
     }
 
 
-    public double[] queryCars(int xid, String location)
+    public long[] queryCars(int xid, String location)
             throws RemoteException, TransactionAbortedException, InvalidTransactionException
     {
-        double time1= getCurrentTime();
+        long time1= getCurrentTime();
+        System.out.println("time1 " + time1);
         int id = xid;
+
         Trace.info("queryCars - Redirect to Car Resource Manager");
 
         acquireLock(id, Car.getKey(location), TransactionLockObject.LockType.LOCK_READ);
         addResourceManagerUsed(id,"Car");
 
 
-        double time2= getCurrentTime();
-        double arr[]= carRM.queryCars(id, location);
-        double time3=getCurrentTime()-time2;
-        return new double[] {getCurrentTime() - time1 - time3, arr[0], arr[1]};
+        long time2= getCurrentTime();
+        System.out.println("time2 " + time2);
+        long arr[]= carRM.queryCars(id, location);
+        long time3=getCurrentTime()-time2;
+        //return MDWtime, RMtime+DBtime, DBtime
+        return new long[] {time2- time1, arr[0], arr[1], arr[2]};
 
     }
 
 
-    public double[] queryRooms(int xid, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+    public long[] queryRooms(int xid, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
     {
-        double time1= getCurrentTime();
+        long time1= getCurrentTime();
+        System.out.println("time1 " + time1);
         int id = xid;
         Trace.info("queryRooms - Redirect to Room Resource Manager");
        
@@ -424,10 +486,11 @@ public class Middleware extends ResourceManager {
         acquireLock(id, Room.getKey(location), TransactionLockObject.LockType.LOCK_READ);
         addResourceManagerUsed(id,"Room");
 
-        double time2= getCurrentTime();
-        double arr[]= roomRM.queryRooms(id, location);
-        double time3=getCurrentTime()-time2;
-        return new double[] {getCurrentTime() - time1 - time3, arr[0], arr[1]};
+        long time2= getCurrentTime();
+        System.out.println("time2 " + time2);
+        long arr[]= roomRM.queryRooms(id, location);
+        long time3=getCurrentTime()-time2;
+        return new long[] {time2- time1, arr[0], arr[1], arr[2]};
        
     }
 
