@@ -10,14 +10,14 @@ import java.rmi.NotBoundException;
 import java.util.*;
 import java.io.*;
 
-public class RMIClientTest2 extends Client implements Runnable
+public class ClientTest_2 extends Client implements Runnable
 {
     private static String s_serverHost = "localhost";
     private static int s_serverPort = 12345;
     private static String s_serverName = "Middleware";
     private static String s_rmiPrefix = "group_24_";
 
-    private static int num_clients = 10;
+    private static int num_clients = 5;
     private static int desired_thput = 1;
     private long timer = 0;
     private int x = 10;
@@ -47,15 +47,12 @@ public class RMIClientTest2 extends Client implements Runnable
 
         // Get a reference to the RMIRegister
         try {
-            RMIClientTest2[] clientTests = new RMIClientTest2[num_clients];
+            System.out.println("Starting test..." + desired_thput);
+            ClientTest_2[] clientTests = new ClientTest_2[num_clients];
             Thread[] clientThreads = new Thread[num_clients];
             for(int i=0; i<num_clients; i++){
-                clientTests[i]= new RMIClientTest2();
+                clientTests[i]= new ClientTest_2();
                 clientTests[i].connectServer();
-
-                //TODO: add return
-              //  List<double> res = clientTests[i].m_resourceManager.start();
-
                 clientTests[i].setTimer();
                 clientThreads[i] = new Thread(clientTests[i]);
                 clientThreads[i].start();
@@ -77,10 +74,17 @@ public class RMIClientTest2 extends Client implements Runnable
                 total_db += testRes.get(i)[3];
             }
 
+            System.out.println(" response time : " + total_res);
+            System.out.println(" mdw time : " + total_mdw);
+            System.out.println(" rm time : " + total_rm);
+            System.out.println(" db time : " + total_db);
+            System.out.println("throughput : " + desired_thput);
+
             System.out.println("average response time : " + total_res/testRes.size());
             System.out.println("average mdw time : " + total_mdw/testRes.size());
             System.out.println("average rm time : " + total_rm/testRes.size());
             System.out.println("average db time : " + total_db/testRes.size());
+            System.out.println("throughput : " + desired_thput);
         }
         catch (Exception e) {
             System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUncaught exception");
@@ -96,16 +100,16 @@ public class RMIClientTest2 extends Client implements Runnable
         }
         boolean plus = true;
         for(int i=0; i<50; i++){
-            int xid = (int)Thread.currentThread().getId()+i+1;
-            System.out.println("XID: "+xid);
             if(plus) timeInterval += x;
             else timeInterval -= x;
             plus = !plus;
             try{
-                long[] res = runE1SingleRM(xid);
+                long[] res = runE1SingleRM();
+                System.out.println("sleep time : " + (timeInterval-res[0]));
+                System.out.println();
+                testRes.add(res);
                 if(timeInterval - res[0] < 0) continue;
                 else {
-                    testRes.add(res);
                     Thread.sleep(timeInterval-res[0]);
                 }
             } catch(Exception e) {
@@ -114,7 +118,7 @@ public class RMIClientTest2 extends Client implements Runnable
         }
     }
 
-    public long[] runE1SingleRM(int xid) throws Exception {
+    public long[] runE1SingleRM() throws Exception {
         long startTime = System.currentTimeMillis();
         // int xid = m_resourceManager.start();
         ArrayList<long[]> total = new ArrayList<>();
@@ -125,17 +129,17 @@ public class RMIClientTest2 extends Client implements Runnable
             return new long[]{-1, -1, -1};
         } else {
             total.add(start);
-            total.add(m_resourceManager.addCars(xid, "Montreal", 1000, 1000));
-            total.add(m_resourceManager.queryCars(xid, "Montreal"));
-            total.add(m_resourceManager.addCars(xid, "Toronto", 1000, 1000));
-            total.add(m_resourceManager.queryCars(xid, "Toronto"));
-            total.add(m_resourceManager.addCars(xid, "Vancouver", 1000, 1000));
-            total.add(m_resourceManager.queryCars(xid, "Vancouver"));
-            total.add(m_resourceManager.addCars(xid, "Ottawa", 1000, 1000));
-            total.add(m_resourceManager.queryCars(xid, "Ottawa"));
-            total.add(m_resourceManager.addCars(xid, "Waterloo", 1000, 1000));
-            total.add(m_resourceManager.queryCars(xid, "Waterloo"));
-            total.add(m_resourceManager.commit(xid));
+            total.add(m_resourceManager.addCars((int)start[0], "Montreal", 1000, 1000));
+            total.add(m_resourceManager.queryCars((int)start[0], "Montreal"));
+            total.add(m_resourceManager.addCars((int)start[0], "Toronto", 1000, 1000));
+            total.add(m_resourceManager.queryCars((int)start[0], "Toronto"));
+            total.add(m_resourceManager.addCars((int)start[0], "Vancouver", 1000, 1000));
+            total.add(m_resourceManager.queryCars((int)start[0], "Vancouver"));
+//            total.add(m_resourceManager.addCars((int)start[0], "Ottawa", 1000, 1000));
+//            total.add(m_resourceManager.queryCars((int)start[0], "Ottawa"));
+//            total.add(m_resourceManager.addCars((int)start[0], "Waterloo", 1000, 1000));
+//            total.add(m_resourceManager.queryCars((int)start[0], "Waterloo"));
+            total.add(m_resourceManager.commit((int)start[0]));
 
             long endTime = System.currentTimeMillis();
             long totalResponseTime = endTime - startTime;
@@ -144,21 +148,22 @@ public class RMIClientTest2 extends Client implements Runnable
             long totalRMTime = 0;
             long totalDBTime = 0;
 
-            for (int i = 0; i < 11; i++) {
+            for (int i = 0; i < total.size()-1; i++) {
 //                System.out.println(i);
-                System.out.println(total.get(i)[0]);
+//                System.out.println(total.get(i)[0]);
                 if(i!=0) MDWTime += total.get(i)[0];
                 totalRMDBTime += total.get(i)[1];
                 if(i!=0) totalDBTime += total.get(i)[2];
             }
 
             totalRMTime = totalRMDBTime - totalDBTime;
-
+            System.out.println("xid: " + (int)start[0]);
             System.out.println("totalResponseTime : " + totalResponseTime);
             System.out.println("totalMDWTime : " + MDWTime);
             System.out.println("totalRMDBTime : " + totalRMDBTime);
             System.out.println("totalRMTime : " + totalRMTime);
             System.out.println("totalDBTime : " + totalDBTime);
+
 //            System.out.println("totalCommunicationTime : " + totalCommunicationTime);
             return new long[]{totalResponseTime, MDWTime, totalRMTime, totalDBTime};
         }

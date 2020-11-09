@@ -18,7 +18,7 @@ public class ClientTest_1 extends Client
     private static String s_serverName = "Middleware";
 
     //TODO: ADD YOUR GROUP NUMBER TO COMPILE
-    private static String s_rmiPrefix = "group7";
+    private static String s_rmiPrefix = "group_24_";
 
     public static void main(String args[])
     {
