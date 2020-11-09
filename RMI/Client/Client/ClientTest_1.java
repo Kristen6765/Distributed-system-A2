@@ -16,6 +16,8 @@ public class ClientTest_1 extends Client
     private static String s_serverHost = "localhost";
     private static int s_serverPort = 12345;
     private static String s_serverName = "Middleware";
+    private static int method =-1;
+    private static int iterations = 1;
 
     //TODO: ADD YOUR GROUP NUMBER TO COMPILE
     private static String s_rmiPrefix = "group_24_";
@@ -24,17 +26,18 @@ public class ClientTest_1 extends Client
     {
         if (args.length > 0)
         {
-            s_serverHost = args[0];
+            method = Integer.parseInt(args[0]);
+            iterations = Integer.parseInt(args[1]);
         }
-        if (args.length > 1)
-        {
-            s_serverName = args[1];
-        }
-        if (args.length > 2)
-        {
-            System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
-            System.exit(1);
-        }
+//        if (args.length > 1)
+//        {
+//            s_serverName = args[1];
+//        }
+//        if (args.length > 2)
+//        {
+//            System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
+//            System.exit(1);
+//        }
 
         // Set the security policy
         if (System.getSecurityManager() == null)
@@ -48,12 +51,19 @@ public class ClientTest_1 extends Client
             client.connectServer();
 //            client.start();
 
-            int iterations = 100;
             ArrayList<long[]> res = new ArrayList<>();
 
+            System.out.println("Method : " + method);
+
             for(int i=1; i<1+iterations; i++) {
-                long[] tmp = client.runE1MultipleRM(i);
-                res.add(tmp);
+                if (method == 1) {
+                    res.add(client.runE1SingleRM());
+                } else if(method == 2) {
+                    res.add(client.runE1MultipleRM());
+                } else {
+                    res.add(client.runTest());
+                }
+//                res.add(tmp);
             }
 
             long total_res = 0;
@@ -82,12 +92,13 @@ public class ClientTest_1 extends Client
     }
 
 
-    public long[] runE1SingleRM(int xid) throws Exception {
+    public long[] runE1SingleRM() throws Exception {
         long startTime = System.currentTimeMillis();
         // int xid = m_resourceManager.start();
         ArrayList<long[]> total = new ArrayList<>();
 
         long[] start = m_resourceManager.start();
+        int xid = (int)start[0];
         if(start[0] == -1.0) {
             System.out.println("Error starting! Aborted");
             return new long[]{-1, -1, -1};
@@ -114,7 +125,7 @@ public class ClientTest_1 extends Client
 
             for (int i = 0; i < 11; i++) {
 //                System.out.println(i);
-                System.out.println(total.get(i)[0]);
+//                System.out.println(total.get(i)[0]);
                 if(i!=0) MDWTime += total.get(i)[0];
                 totalRMDBTime += total.get(i)[1];
                 if(i!=0) totalDBTime += total.get(i)[2];
@@ -133,12 +144,13 @@ public class ClientTest_1 extends Client
     }
 
 
-    public long[] runE1MultipleRM(int xid) throws Exception {
+    public long[] runE1MultipleRM() throws Exception {
         long startTime = System.currentTimeMillis();
         // int xid = m_resourceManager.start();
         ArrayList<long[]> total = new ArrayList<>();
 
         long[] start = m_resourceManager.start();
+        int xid = (int)start[0];
         if(start[0] == -1.0) {
             System.out.println("Error starting! Aborted");
             return new long[]{-1, -1, -1};
@@ -164,8 +176,8 @@ public class ClientTest_1 extends Client
             long totalDBTime = 0;
 
             for (int i = 0; i < 11; i++) {
-                System.out.println(i);
-                System.out.println(total.get(i)[0]);
+//                System.out.println(i);
+//                System.out.println(total.get(i)[0]);
                 if(i!=0) MDWTime += total.get(i)[0];
                 totalRMDBTime += total.get(i)[1];
                 if(i!=0) totalDBTime += total.get(i)[2];
@@ -184,9 +196,66 @@ public class ClientTest_1 extends Client
     }
 
 
+    public long[] runTest() throws Exception {
+        long startTime = System.currentTimeMillis();
+        // int xid = m_resourceManager.start();
+        ArrayList<long[]> total = new ArrayList<>();
+
+        long[] start = m_resourceManager.start();
+        int xid = (int)start[0];
+
+        int cid = 10000;
+
+        m_resourceManager.newCustomer(xid, cid);
 
 
+        if(start[0] == -1.0) {
+            System.out.println("Error starting! Aborted");
+            return new long[]{-1, -1, -1};
+        } else {
+            total.add(start);
+            total.add(m_resourceManager.addCars(xid, "Montreal", 1000, 1000));
+            total.add(m_resourceManager.queryCars(xid, "Montreal"));
+            total.add(m_resourceManager.addRooms(xid, "Toronto", 1000, 1000));
+            total.add(m_resourceManager.queryRooms(xid, "Toronto"));
+            total.add(m_resourceManager.addFlight(xid, 1, 1000, 1000));
+            total.add(m_resourceManager.queryFlight(xid, 1));
+            total.add(m_resourceManager.reserveCar(xid, cid, "Montreal"));
+            total.add(m_resourceManager.reserveRoom(xid, cid, "Toronto"));
+            total.add(m_resourceManager.reserveFlight(xid, cid, 1));
+            total.add(m_resourceManager.commit(xid));
 
+//            total.add(m_resourceManager.addCars(xid, "Ottawa", 1000, 1000));
+//            total.add(m_resourceManager.queryCars(xid, "Ottawa"));
+//            total.add(m_resourceManager.addFlight(xid, 2, 1000, 1000));
+//            total.add(m_resourceManager.queryFlight(xid, 2));
+
+            long endTime = System.currentTimeMillis();
+            long totalResponseTime = endTime - startTime;
+            long MDWTime = 0;
+            long totalRMDBTime = 0;
+            long totalRMTime = 0;
+            long totalDBTime = 0;
+
+            for (int i = 0; i < 10; i++) {
+//                System.out.println(i);
+                System.out.println(total.get(i)[1]);
+                if(i!=0) MDWTime += total.get(i)[0];
+                totalRMDBTime += total.get(i)[1];
+                if(i!=0) totalDBTime += total.get(i)[2];
+            }
+
+            totalRMTime = totalRMDBTime - totalDBTime;
+
+            System.out.println("totalResponseTime : " + totalResponseTime);
+            System.out.println("totalMDWTime : " + MDWTime);
+            System.out.println("totalRMDBTime : " + totalRMDBTime);
+            System.out.println("totalRMTime : " + totalRMTime);
+            System.out.println("totalDBTime : " + totalDBTime);
+//            System.out.println("totalCommunicationTime : " + totalCommunicationTime);
+            return new long[]{totalResponseTime, MDWTime, totalRMTime, totalDBTime};
+        }
+    }
 
 
 //    public void runE1MultipleRM() throws Exception {

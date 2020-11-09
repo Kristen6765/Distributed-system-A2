@@ -171,31 +171,37 @@ public class ResourceManager implements IResourceManager
 //	}
 
 	// Reserve an item
-	protected boolean reserveItem(int xid, int customerID, String key, String location) throws InvalidTransactionException
+	protected long[] reserveItem(int xid, int customerID, String key, String location) throws InvalidTransactionException
 	{
+        long timeDB1=getCurrentTime();
 		Trace.info("RM::reserveItem(" + xid + ", customer=" + customerID + ", " + key + ", " + location + ") called" );
 		// Read customer object if it exists (and read lock it)
 		Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+		long time_1=getCurrentTime()-timeDB1;
+
 		if (customer == null)
 		{
 			Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
-			return false;
+			return new long[]{-100000000, -100000000};
 		}
 
 		// Check if the item is available
+		long timeDB2=getCurrentTime();
 		ReservableItem item = (ReservableItem)readData(xid, key);
+		long time_2=getCurrentTime()-timeDB2;
 		if (item == null)
 		{
 			Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") failed--item doesn't exist");
-			return false;
+			return new long[]{-100000000, -100000000};
 		}
 		else if (item.getCount() == 0)
 		{
 			Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") failed--No more items");
-			return false;
+			return new long[]{-100000000, -100000000};
 		}
 		else
 		{
+			long timeDB3=getCurrentTime();
 			customer.reserve(key, location, item.getPrice());
 			writeData(xid, customer.getKey(), customer);
 
@@ -203,9 +209,10 @@ public class ResourceManager implements IResourceManager
 			item.setCount(item.getCount() - 1);
 			item.setReserved(item.getReserved() + 1);
 			writeData(xid, item.getKey(), item);
+			long time_3=getCurrentTime()-timeDB3;
 
 			Trace.info("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") succeeded");
-			return true;
+			return new long[] {getCurrentTime() - timeDB1, (time_1+time_2+time_3)};
 		}
 	}
 
@@ -475,19 +482,19 @@ public class ResourceManager implements IResourceManager
 	}
 
 	// Adds flight reservation to this customer
-	public boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public long[] reserveFlight(int xid, int customerID, int flightNum) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
 		return reserveItem(xid, customerID, Flight.getKey(flightNum), String.valueOf(flightNum));
 	}
 
 	// Adds car reservation to this customer
-	public boolean reserveCar(int xid, int customerID, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public long[] reserveCar(int xid, int customerID, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
 		return reserveItem(xid, customerID, Car.getKey(location), location);
 	}
 
 	// Adds room reservation to this customer
-	public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public long[] reserveRoom(int xid, int customerID, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
 		return reserveItem(xid, customerID, Room.getKey(location), location);
 	}

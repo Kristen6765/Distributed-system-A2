@@ -225,7 +225,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Success
      */
-    public boolean reserveFlight(int id, int customerID, int flightNumber) 
+    public long[] reserveFlight(int id, int customerID, int flightNumber)
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 
     /**
@@ -233,7 +233,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Success
      */
-    public boolean reserveCar(int id, int customerID, String location) 
+    public long[] reserveCar(int id, int customerID, String location)
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 
         /**
@@ -241,7 +241,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Success
      */
-    public boolean reserveRoom(int id, int customerID, String location)
+    public long[] reserveRoom(int id, int customerID, String location)
             throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 
     /**
