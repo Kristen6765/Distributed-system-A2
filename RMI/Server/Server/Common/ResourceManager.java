@@ -29,6 +29,14 @@ public class ResourceManager implements IResourceManager
 		tm = new TransactionManager();
 	}
 
+
+	//for analysis
+
+	public double getCurrentTime() {
+		return System.currentTimeMillis();
+	}
+
+
 	protected void setTransactionManager(TransactionManager tm) {
 		this.tm = tm;
 	}
@@ -219,8 +227,9 @@ public class ResourceManager implements IResourceManager
 
 	// Create a new flight, or add seats to existing flight
 	// NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
-	public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public double[] addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
+		double time=getCurrentTime();
 		Trace.info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
 		Flight curObj = (Flight)readData(xid, Flight.getKey(flightNum));
 		if (curObj == null)
@@ -241,13 +250,16 @@ public class ResourceManager implements IResourceManager
 			writeData(xid, curObj.getKey(), curObj);
 			Trace.info("RM::addFlight(" + xid + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice);
 		}
-		return true;
+		return new double[] {getCurrentTime()-time};
+		//return true;
 	}
 
 	// Create a new car location or add cars to an existing location
 	// NOTE: if price <= 0 and the location already exists, it maintains its current price
-	public boolean addCars(int xid, String location, int count, int price) throws RemoteException,TransactionAbortedException,InvalidTransactionException
+	public double[] addCars(int xid, String location, int count, int price) throws RemoteException,TransactionAbortedException,InvalidTransactionException
 	{
+		double time=getCurrentTime();
+
 		Trace.info("RM::addCars(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
 		Car curObj = (Car)readData(xid, Car.getKey(location));
 		if (curObj == null)
@@ -268,13 +280,18 @@ public class ResourceManager implements IResourceManager
 			writeData(xid, curObj.getKey(), curObj);
 			Trace.info("RM::addCars(" + xid + ") modified existing location " + location + ", count=" + curObj.getCount() + ", price=$" + price);
 		}
-		return true;
+		//return true;
+
+		return new double[] {getCurrentTime()-time};
 	}
 
 	// Create a new room location or add rooms to an existing location
 	// NOTE: if price <= 0 and the room location already exists, it maintains its current price
-	public boolean addRooms(int xid, String location, int count, int price) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public double[] addRooms(int xid, String location, int count, int price) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
+
+		double time=getCurrentTime();
+
 		Trace.info("RM::addRooms(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
 		Room curObj = (Room)readData(xid, Room.getKey(location));
 		if (curObj == null)
@@ -293,7 +310,9 @@ public class ResourceManager implements IResourceManager
 			writeData(xid, curObj.getKey(), curObj);
 			Trace.info("RM::addRooms(" + xid + ") modified existing location " + location + ", count=" + curObj.getCount() + ", price=$" + price);
 		}
-		return true;
+
+		return new double[] {getCurrentTime()-time};
+		//return true;
 	}
 
 	// Deletes flight
@@ -315,26 +334,37 @@ public class ResourceManager implements IResourceManager
 	}
 
 	// Returns the number of empty seats in this flight
-	public int queryFlight(int xid, int flightNum) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public double[] queryFlight(int xid, int flightNum)
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException
 	{
-		return queryNum(xid, Flight.getKey(flightNum));
+
+		double time0=getCurrentTime();
+		int result=queryNum(xid, Flight.getKey(flightNum));
+		return new double[] {getCurrentTime() - time0, (double) result};
+	
 	}
 
 	// Returns the number of cars available at a location
-	public int queryCars(int xid, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public double[] queryCars(int xid, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
-		return queryNum(xid, Car.getKey(location));
+		double time0=getCurrentTime();
+		int result=queryNum(xid, Car.getKey(location));
+		return new double[] {getCurrentTime() - time0, (double) result};
+	
 	}
 
 	// Returns the amount of rooms available at a location
-	public int queryRooms(int xid, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
+	public double[] queryRooms(int xid, String location) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
-		return queryNum(xid, Room.getKey(location));
+		double time0=getCurrentTime();
+		int result=queryNum(xid, Room.getKey(location));
+		return new double[] {getCurrentTime() - time0, (double) result};
 	}
 
 	// Returns price of a seat in this flight
 	public int queryFlightPrice(int xid, int flightNum) throws RemoteException,TransactionAbortedException, InvalidTransactionException
 	{
+		
 		return queryPrice(xid, Flight.getKey(flightNum));
 	}
 
@@ -453,7 +483,7 @@ public class ResourceManager implements IResourceManager
 	}
 
 
-	public int start() throws RemoteException{
+	public double[] start() throws RemoteException{
 		return 0;
 	}
 
