@@ -57,18 +57,27 @@ public class Middleware extends ResourceManager {
 
     public long[] commit(int xid) throws RemoteException,TransactionAbortedException, InvalidTransactionException
     {
+        long start = getCurrentTime();
         if(!traxManager.isActive(xid))
             throw new InvalidTransactionException(xid, "Middleware commit: transaction is not active");
         Transaction t = traxManager.getActiveTransaction(xid);
         RMHashMap m = t.get_TMPdata();
         boolean[] relatedRM = t.getRelatedRMs();
 
+        long time1 = 0;
+        long time2 = 0;
+        long time3 = 0;
+        long time4 = 0;
+
+
         if (relatedRM[0]){
             synchronized (flightRM.m_data ){
                 Set<String> keyset = m.keySet();
                 for (String key : keyset) {
                     System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    long t0 = getCurrentTime();
                     flightRM.m_data.put(key, m.get(key));
+                    time1 = getCurrentTime() - t0;
                 }
             }
         }
@@ -77,7 +86,9 @@ public class Middleware extends ResourceManager {
                 Set<String> keyset = m.keySet();
                 for (String key : keyset) {
                     System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    long t0 = getCurrentTime();
                     flightRM.m_data.put(key, m.get(key));
+                    time2 = getCurrentTime() - t0;
                 }
             }
         }
@@ -86,7 +97,9 @@ public class Middleware extends ResourceManager {
                 Set<String> keyset = m.keySet();
                 for (String key : keyset) {
                     System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    long t0 = getCurrentTime();
                     flightRM.m_data.put(key, m.get(key));
+                    time3 = getCurrentTime() - t0;
                 }
             }
         }
@@ -97,14 +110,17 @@ public class Middleware extends ResourceManager {
                 Set<String> keyset = m.keySet();
                 for (String key : keyset) {
                     System.out.println("Write:(" + key + "," + m.get(key) + ")");
+                    long t0 = getCurrentTime();
                     m_data.put(key, m.get(key));
+                    time4 = getCurrentTime() - t0;
                 }
             }
         }
 
         traxManager.removeActiveTransaction(xid);
         lockManager.UnlockAll(xid);
-        return new long[] {-1000, -1000, -1000};
+        long mdw_time = getCurrentTime() - start;
+        return new long[] {mdw_time , (time1+time2+time3+time4)};
     }
 
 
