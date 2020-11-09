@@ -328,7 +328,7 @@ public class Middleware extends ResourceManager {
         long time0=getCurrentTime();
         int id = xid;
         Transaction trx = traxManager.getActiveTransaction(xid);
-        //trx.resetTimer();
+        trx.resetTimer();
 
         Trace.info("addFlight - Redirect to Flight Resource Manager");
         //checkTransaction(id);
@@ -348,6 +348,8 @@ public class Middleware extends ResourceManager {
         long time0=getCurrentTime();
         int id = xid;
         Trace.info("addCars - Redirect to Car Resource Manager");
+        Transaction trx = traxManager.getActiveTransaction(xid);
+        trx.resetTimer();
         //checkTransaction(id);
         acquireLock(id, Car.getKey(location), TransactionLockObject.LockType.LOCK_WRITE);
         addResourceManagerUsed(id,"Car");
@@ -370,6 +372,8 @@ public class Middleware extends ResourceManager {
         int id = xid;
         Trace.info("addRooms - Redirect to Room Resource Manager");
         //checkTransaction(id);
+        Transaction trx = traxManager.getActiveTransaction(xid);
+        trx.resetTimer();
 
         acquireLock(id, Room.getKey(location), TransactionLockObject.LockType.LOCK_WRITE);
         addResourceManagerUsed(id,"Room");
@@ -438,7 +442,7 @@ public class Middleware extends ResourceManager {
     
 
         Transaction trx = traxManager.getActiveTransaction(xid);
-        //trx.resetTimer();
+        trx.resetTimer();
 
 
         acquireLock(id, Flight.getKey(flightNumber), TransactionLockObject.LockType.LOCK_READ);
@@ -458,6 +462,8 @@ public class Middleware extends ResourceManager {
         long time1= getCurrentTime();
         System.out.println("time1 " + time1);
         int id = xid;
+        Transaction trx = traxManager.getActiveTransaction(xid);
+        trx.resetTimer();
 
         Trace.info("queryCars - Redirect to Car Resource Manager");
 
@@ -481,7 +487,8 @@ public class Middleware extends ResourceManager {
         System.out.println("time1 " + time1);
         int id = xid;
         Trace.info("queryRooms - Redirect to Room Resource Manager");
-       
+        Transaction trx = traxManager.getActiveTransaction(xid);
+        trx.resetTimer();
 
         acquireLock(id, Room.getKey(location), TransactionLockObject.LockType.LOCK_READ);
         addResourceManagerUsed(id,"Room");

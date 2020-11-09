@@ -15,7 +15,7 @@ import java.rmi.server.UnicastRemoteObject;
 public class RMIMiddleware extends Middleware {
 
     private static String s_serverName = "Middleware";
-    private static String s_rmiPrefix = "group7";
+    private static String s_rmiPrefix = "group_24_";
 
     public static void main(String[] args) {
 
