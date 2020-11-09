@@ -58,9 +58,9 @@ public RMHashMap m_data = new RMHashMap();
      * Add transaction to an resource manager's TransactionManager
      */
     public void addTransaction(int xid) throws RemoteException;
-    public double[] start() throws RemoteException;
+    public long[] start() throws RemoteException;
 
-    public boolean commit(int xid) throws RemoteException, TransactionAbortedException, InvalidTransactionException;
+    public long[] commit(int xid) throws RemoteException, TransactionAbortedException, InvalidTransactionException;
 
     public void abort(int xid) throws RemoteException, InvalidTransactionException;
    // public RMHashMap getM_data() throws RemoteException;
@@ -74,7 +74,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Success
      */
-    public  double[] addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
+    public  long[] addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
     
     /**
@@ -85,7 +85,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Success
      */
-    public double[] addCars(int id, String location, int numCars, int price) 
+    public long[] addCars(int id, String location, int numCars, int price) 
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
    
     /**
@@ -96,7 +96,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Success
      */
-    public  double[] addRooms(int id, String location, int numRooms, int price) 
+    public  long[] addRooms(int id, String location, int numRooms, int price) 
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 			    
     /**
@@ -169,7 +169,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Number of empty seats
      */
-    public double[] queryFlight(int id, int flightNumber) 
+    public long[] queryFlight(int id, int flightNumber) 
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 
     /**
@@ -177,7 +177,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Number of available cars at this location
      */
-    public double[] queryCars(int id, String location) 
+    public long[] queryCars(int id, String location) 
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 
     /**
@@ -185,7 +185,7 @@ public RMHashMap m_data = new RMHashMap();
      *
      * @return Number of available rooms at this location
      */
-    public double[] queryRooms(int id, String location) 
+    public long[] queryRooms(int id, String location) 
 	throws RemoteException,TransactionAbortedException, InvalidTransactionException;
 
     /**
