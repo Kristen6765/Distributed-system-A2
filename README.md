@@ -46,7 +46,9 @@ Customer command example
 addFlight, <xid>,<FlightNumber>,<NumberOfSeats>,<PricePerSeat>
 ````
 
-![Screen Shot 2021-08-17 at 3.35.48 PM](/Users/kristenpeng/Library/Application Support/typora-user-images/Screen Shot 2021-08-17 at 3.35.48 PM.png)
+
+<img width="547" alt="Screen Shot 2021-08-23 at 9 50 17 PM" src="https://user-images.githubusercontent.com/52952222/130542824-80a7e2b2-324e-4ef0-b55c-f4a76459263b.png">
+
 
 other command could be find either by 
 
