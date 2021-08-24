@@ -46,8 +46,7 @@ Customer command example
 addFlight, <xid>,<FlightNumber>,<NumberOfSeats>,<PricePerSeat>
 ````
 
-
-<img width="547" alt="Screen Shot 2021-08-23 at 9 50 17 PM" src="https://user-images.githubusercontent.com/52952222/130542824-80a7e2b2-324e-4ef0-b55c-f4a76459263b.png">
+<img src="images/command.png" width = "250x">
 
 
 other command could be find either by 
@@ -58,7 +57,7 @@ Prompt Help in the terminal or be find in the Client_UserGuide.pdf
 
 ### Project Architecture 
 
-
+<img src="images/Architecture.png"  width = "800x">
 
 There are three RMIResourceManager for Car, Room and Flight servers respectively. Once established by the user, the proxy for each of the three ResourceManager is exported to the registry for the RMIMiddleware. The RMIMiddleware contains the proxy of the three resource managers and it again exports itself as a proxy object to the clients. When the client makes a request, it looks up the RMIMiddleware object from the registry to send the request. Once receiving the request, the middleware would find the specific ResourceManager to execute the command.
 
@@ -68,5 +67,5 @@ A centralized Lock-Manager (strict 2PL) is implemented and attached to the Middl
 
 The following diagram shows  the high  level view  of the  dependency  among each of the key components in our system.
 
-![Screen Shot 2021-08-17 at 4.01.41 PM](/Users/kristenpeng/Library/Application Support/typora-user-images/Screen Shot 2021-08-17 at 4.01.41 PM.png)
+<img src="images/Architecture2.png"  width = "800x">
 
