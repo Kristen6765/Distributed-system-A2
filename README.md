@@ -1,4 +1,4 @@
-# Distributed-system-A2
+# Distributed-system
 Travel Reservation system
 This is a school project from COMP512 in McGill University. Basic template are provided by McGill Uiveristy and University of Washington.
 
